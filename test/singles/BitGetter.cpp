@@ -104,7 +104,7 @@ struct NAL_SEI
 
 int main()
 {
-    FILE *h264File = fopen(R"(H:\code\ot\h264_win\res\s.h264)", "rb");
+    FILE* h264File = fopen( "../C264-Resource/Res/USA20.h264", "rb");
 #define CACHE_SZ 4096 * 10
     byte           cache[CACHE_SZ];
     size_t         freadSize = fread(cache, 1, CACHE_SZ, h264File);
