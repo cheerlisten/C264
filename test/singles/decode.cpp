@@ -10,7 +10,7 @@ TEST(main, decode)
 {
     ISource* source;
     SourceSetting sourceSetting;
-    sourceSetting.url = R"(C:/Users/Administrator/Videos/In/USA.h264)";
+    sourceSetting.url = CMAKE_SOURCE_DIR R"("/../C264-Resource/Res/USA20.h264")";
     sourceSetting.type = E_SOURCE_ANNEXB;
 
     CALL(CreateNALSource(&source));
