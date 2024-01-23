@@ -1,21 +1,14 @@
 #pragma once
-
-#include <c264/c264.h>
 #include <assert.h>
-#include <stdio.h>
 #include <stdint.h>
 #include <vector>
 
-using byte = uint8_t;
-struct BufferView
-{
-    byte* buf;
-    uint32_t sz;
-    uint32_t file_pos;
-};
+#include <c264/source.h>
 
-class AnnexReader:: public ISource
+class AnnexReader : public ISource
 {
+    using byte = uint8_t;
+
   public:
     AnnexReader();
     ~AnnexReader();
@@ -23,7 +16,7 @@ class AnnexReader:: public ISource
     virtual int UnInitialize() override;
     /// @brief get next nalu
     /// @return 0:OK
-    virtual int NextNALU(BufferView* bufView) override;
+    virtual int                  NextNAL(BufferView* bufView) override;
     virtual const SourceSetting* GetSetting() override;
     enum
     {
@@ -37,12 +30,12 @@ class AnnexReader:: public ISource
     {
         uint32_t buf_idx = 0;
         uint32_t buf_sz = 0;
-        bool reach_EOF = false;
-        byte* iobuf = nullptr;
+        bool     reach_EOF = false;
+        byte*    iobuf = nullptr;
         uint32_t iobuf_sz = 4096;
         uint32_t iobuf_pos = 0;
-        FILE* fd = nullptr;
-        int NextBuffer()
+        FILE*    fd = nullptr;
+        int      NextBuffer()
         {
             buf_sz = (uint32_t)fread(iobuf, 1, iobuf_sz, fd);
             buf_idx = 0;
@@ -54,9 +47,9 @@ class AnnexReader:: public ISource
     struct OutBuf
     {
         std::vector<byte> buf;
-        uint32_t buf_idx = 0;
-        uint32_t buf_end_idx = 0;
-        int IncBuffer(uint32_t more_sz)
+        uint32_t          buf_idx = 0;
+        uint32_t          buf_end_idx = 0;
+        int               IncBuffer(uint32_t more_sz)
         {
             uint32_t new_sz = (uint32_t)buf.size() + more_sz;
             buf.resize(new_sz);
@@ -66,14 +59,13 @@ class AnnexReader:: public ISource
     struct AuxInfo
     {
         uint32_t readedNextStartCodeLength = 0;
-        byte leadingZeroCount = 0;
-        bool firstOneOut = true;
+        byte     leadingZeroCount = 0;
+        bool     firstOneOut = true;
     };
 
     SourceSetting m_setting;
 
     IoBufReader io;
-    OutBuf out;
-    AuxInfo aux;
+    OutBuf      out;
+    AuxInfo     aux;
 };
-

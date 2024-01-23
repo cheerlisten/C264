@@ -1,4 +1,4 @@
-#include "fileReader.h"
+#include <annexbReader.h>
 
 int AnnexReader::Initialize(const SourceSetting* setting)
 {
@@ -22,7 +22,7 @@ int AnnexReader::UnInitialize()
     return 0;
 }
 
-int AnnexReader::NextNALU(BufferView* bufView)
+int AnnexReader::NextNAL(BufferView* bufView)
 {
     if (aux.firstOneOut)
     {
@@ -36,8 +36,8 @@ int AnnexReader::NextNALU(BufferView* bufView)
     if (out.buf_end_idx > 0)
     {
         bufView->buf = out.buf.data() + out.buf_idx;
-        bufView->sz = out.buf_end_idx - out.buf_idx;
-        bufView->file_pos = aux_pos;
+        bufView->size = out.buf_end_idx - out.buf_idx;
+        bufView->source_pos = aux_pos;
         return 0;
     }
     else

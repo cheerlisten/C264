@@ -1,6 +1,6 @@
 #include <log.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 static LogLevel    g_ll;
 static const char* g_llMapStr[] = { "Verbose", "Debug", "Info", "Warn", "Error", "Panic" };
