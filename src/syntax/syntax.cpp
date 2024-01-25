@@ -9,7 +9,7 @@
         return retval;                                                                                                 \
     } while (0)
 
-int SyntaxParse(const BufferView* nalBufView, struct Sema* sema)
+int Parser::SyntaxParse(const BufferView* nalBufView)
 {
     std::shared_ptr<RefNalu> refNal = makeRefNal(*nalBufView);
     RBSPCursor               cursor(refNal);
@@ -25,7 +25,7 @@ int SyntaxParse(const BufferView* nalBufView, struct Sema* sema)
     {
     case NALT::SPS:
     {
-        seq_parameter_set_rbsp_t* sps = nullptr;
+        std::unique_ptr<seq_parameter_set_rbsp_t> sps = nullptr;
         if (!(sps = ParseSPS(cursor)))
             FailedParse("SPS", -1);
         sema->EmitSPS(nalu, sps);
@@ -33,6 +33,10 @@ int SyntaxParse(const BufferView* nalBufView, struct Sema* sema)
     }
     case NALT::PPS:
     {
+        std::unique_ptr<pic_parameter_set_rbsp_t> pps = nullptr;
+        if (!(pps = ParsePPS(cursor, this)))
+            FailedParse("SPS", -1);
+        sema->EmitPPS(nalu, pps);
         break;
     }
 

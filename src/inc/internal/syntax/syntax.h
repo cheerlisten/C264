@@ -7,6 +7,13 @@
 #include <syntax/nal.h>
 #include <syntax/parset.h>
 
-/// @brief nal parse entry
-/// @param nalBufView bitstream data: startcode + NALU + RBSP trailling bits
-int SyntaxParse(const BufferView* nalBufView, struct Sema* sema);
+struct Parser
+{
+    /// @brief nal parse entry
+    /// @param nalBufView bitstream data: startcode + NALU + RBSP trailling bits
+    int SyntaxParse(const BufferView* nalBufView);
+
+    struct Sema* sema;
+
+    std::vector<std::unique_ptr<seq_parameter_set_rbsp_t>> sps;
+};

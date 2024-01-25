@@ -7,7 +7,7 @@ nalu_t* ParseNAL(RBSPCursor& cursor)
     memset(nalu, 0, sizeof(nalu));
 
     RBSPCursor __cursor = cursor;
-    StartBits(__cursor.buf, __cursor.bit_pos);
+    StartBitsCursor(__cursor);
 
     // start code part is not in shrinked RBSP buffer
     nalu->startcodeprefix_len = cursor.refNal->start_code_length - 1;

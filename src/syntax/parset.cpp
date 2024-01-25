@@ -1,9 +1,29 @@
-#include <syntax/parset.h>
+#include <syntax/syntax.h>
 #include <log.h>
+
+static void Scaling_List(int* scalingList, int sizeOfScalingList, Bool* useDefaultScalingMatrix, RBSPCursor& cursor)
+{
+    StartBitsCursor(cursor);
+    int lastScale = 8;
+    int nextScale = 8;
+    for (int j = 0; j < sizeOfScalingList; ++j)
+    {
+        // $spec[8.5.6] + $spec[8.5.7] zig-zag scan
+        int scanj = (sizeOfScalingList == 16) ? g_kuiZigzagScan[j] : g_kuiZigzagScan8x8[j];
+        if (nextScale != 0)
+        {
+            int delta_scale = read_se();
+            nextScale = (lastScale + delta_scale + 256) % 256;
+            *useDefaultScalingMatrix = (scanj == 0 && nextScale == 0);
+        }
+        scalingList[scanj] = (nextScale == 0) ? lastScale : nextScale;
+        lastScale = scalingList[scanj];
+    }
+}
 
 static void InterpretHRD(hrd_parameters_t& hrd, RBSPCursor& cursor)
 {
-    StartBits(cursor.buf, cursor.bit_pos);
+    StartBitsCursor(cursor);
 
     hrd.cpb_cnt_minus1 = read_ue();
     hrd.bit_rate_scale = GetBits(4);
@@ -24,7 +44,7 @@ static void InterpretVUI(vui_seq_parameters_t& vui, RBSPCursor& cursor)
 {
     vui.matrix_coefficients = 2;
 
-    StartBits(cursor.buf, cursor.bit_pos);
+    StartBitsCursor(cursor);
 
     if (vui.aspect_ratio_info_present_flag = GetBits(1))
     {
@@ -80,13 +100,12 @@ static void InterpretVUI(vui_seq_parameters_t& vui, RBSPCursor& cursor)
     }
 }
 
-seq_parameter_set_rbsp_t* ParseSPS(RBSPCursor& cursor)
+std::unique_ptr<seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
 {
-    seq_parameter_set_rbsp_t* sps = new seq_parameter_set_rbsp_t;
-    memset(sps, 0, sizeof(*sps));
+    std::unique_ptr<seq_parameter_set_rbsp_t> sps = std::make_unique<seq_parameter_set_rbsp_t>();
 
     RBSPCursor __cursor = cursor;
-    StartBits(__cursor.buf, __cursor.bit_pos);
+    StartBitsCursor(__cursor);
 
     sps->profile_idc = GetBits(8);
     sps->constrained_set0_flag = GetBits(1);
@@ -116,9 +135,9 @@ seq_parameter_set_rbsp_t* ParseSPS(RBSPCursor& cursor)
                 if (sps->seq_scaling_list_present_flag[i])
                 {
                     if (i < 6)
-                        ; //
+                        Scaling_List(sps->ScalingList4x4[i], 16, &sps->UseDefaultScalingMatrix4x4Flag[i], __cursor);
                     else
-                        ; //
+                        Scaling_List(sps->ScalingList4x4[i], 64, &sps->UseDefaultScalingMatrix4x4Flag[i - 6], __cursor);
                 }
             }
         }
@@ -157,4 +176,98 @@ seq_parameter_set_rbsp_t* ParseSPS(RBSPCursor& cursor)
 
     cursor = __cursor;
     return sps;
+}
+
+std::unique_ptr<pic_parameter_set_rbsp_t> ParsePPS(RBSPCursor& cursor, const struct Parser* parser)
+{
+    std::unique_ptr<pic_parameter_set_rbsp_t> pps = std::make_unique<pic_parameter_set_rbsp_t>();
+
+    RBSPCursor __cursor = cursor;
+    StartBitsCursor(__cursor);
+
+    pps->pic_parameter_set_id = read_ue();
+    pps->seq_parameter_set_id = read_ue();
+    pps->entropy_coding_mode_flag = GetBits(1);
+    pps->bottom_field_pic_order_in_frame_present_flag = GetBits(1);
+    pps->num_slice_groups_minus1 = read_ue();
+
+    if (pps->num_slice_groups_minus1 > 0)
+    {
+        pps->slice_group_map_type = read_ue();
+
+        if (pps->slice_group_map_type == 0)
+        {
+            for (int i = 0; i <= pps->slice_group_map_type; ++i)
+                pps->run_length_minus1[i] = read_ue();
+        }
+        else if (pps->slice_group_map_type == 2)
+        {
+            for (int i = 0; i <= pps->slice_group_map_type; ++i)
+            {
+                pps->top_left[i] = read_ue();
+                pps->bottom_right[i] = read_ue();
+            }
+        }
+        else if (pps->slice_group_map_type == 3 || pps->slice_group_map_type == 4 || pps->slice_group_map_type == 5)
+        {
+            pps->slice_group_change_direction_flag = GetBits(1);
+            pps->slice_group_change_rate_minus1 = read_ue();
+        }
+        else if (pps->slice_group_map_type == 6)
+        {
+            pps->pic_size_in_map_units_minus1 = read_ue();
+            for (int i = 0; i <= pps->pic_size_in_map_units_minus1; ++i)
+                pps->slice_group_id[i] = read_ue();
+        }
+    }
+    pps->num_ref_idx_l0_default_active_minus1 = read_ue();
+    pps->num_ref_idx_l1_default_active_minus1 = read_ue();
+    pps->weighted_pred_flag = GetBits(1);
+    pps->weighted_bipred_idc = GetBits(2);
+    pps->pic_init_qp_minus26 = read_se();
+    pps->pic_init_qs_minus26 = read_se();
+    pps->chroma_qp_index_offset = read_se();
+    pps->deblocking_filter_control_present_flag = GetBits(1);
+    pps->constrained_intra_pred_flag = GetBits(1);
+    pps->redundant_pic_cnt_present_flag = GetBits(1);
+
+    if (MoreBits())
+    {
+        pps->transform_8x8_mode_flag = GetBits(1);
+        pps->pic_scaling_matrix_present_flag = GetBits(1);
+        if (pps->pic_scaling_matrix_present_flag)
+        {
+            if (!parser || parser->sps.size() <= pps->seq_parameter_set_id)
+            {
+                LOG(LL_Error,
+                    "missing or wrong PPS->seq_parameter_set_id=%d, such SPS(cur got %d SPS) is not found, exit",
+                    pps->seq_parameter_set_id,
+                    parser ? parser->sps.size() : 0);
+                return nullptr;
+            }
+            seq_parameter_set_rbsp_t* sps = parser->sps[pps->seq_parameter_set_id].get();
+            int flags_count = 6 + (sps->chroma_format_idc != 3 ? 2 : 6) * pps->transform_8x8_mode_flag;
+            for (int i = 0; i < flags_count; ++i)
+            {
+                pps->pic_scaling_list_present_flag[i] = GetBits(1);
+                if (pps->pic_scaling_list_present_flag[i])
+                {
+                    if (i < 6)
+                        if (i < 6)
+                            Scaling_List(sps->ScalingList4x4[i], 16, &sps->UseDefaultScalingMatrix4x4Flag[i], __cursor);
+                        else
+                            Scaling_List(
+                                sps->ScalingList4x4[i], 64, &sps->UseDefaultScalingMatrix4x4Flag[i - 6], __cursor);
+                }
+            }
+        }
+        pps->second_chroma_qp_index_offset = read_se();
+    }
+    else
+    { // $spec.said When second_chroma_qp_index_offset is not present, it shall be inferred to be equal to chroma_qp_index_offset.
+        pps->second_chroma_qp_index_offset = pps->chroma_qp_index_offset;
+    }
+
+    cursor = __cursor;
+    return pps;
 }

@@ -105,10 +105,13 @@ static uint32_t read_se_golomb(const byte* buffer, int& bitCounter)
         return -int32_t(ue >> 1);
 }
 
-#define StartBits(buf_, bitCounter_)                                                                                   \
-    const uint8_t* buf = buf_;                                                                                         \
-    int&           bitCounter = bitCounter_
-#define GetBits(n) get_bits(buf, bitCounter, n)
-#define SkipBits(n) skip_bits(buf, bitCounter, n)
-#define read_ue() read_ue_golomb(buf, bitCounter)
-#define read_se() read_se_golomb(buf, bitCounter)
+#define StartBits(buf, bitCounter, size)                                                                               \
+    const uint8_t* _buf = buf;                                                                                         \
+    int&           _bitCounter = bitCounter;                                                                           \
+    int            _size = size
+#define StartBitsCursor(cursor) StartBits((cursor).buf, (cursor).bit_pos, (cursor).size)
+#define GetBits(n) get_bits(_buf, _bitCounter, n)
+#define SkipBits(n) skip_bits(_buf, _bitCounter, n)
+#define MoreBits() (_size * 8 - _bitCounter)
+#define read_ue() read_ue_golomb(_buf, _bitCounter)
+#define read_se() read_se_golomb(_buf, _bitCounter)
