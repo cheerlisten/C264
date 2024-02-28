@@ -105,13 +105,36 @@ static uint32_t read_se_golomb(const byte* buffer, int& bitCounter)
         return -int32_t(ue >> 1);
 }
 
-#define StartBits(buf, bitCounter, size)                                                                               \
+/// @note $spec[7.4.1] rbsp_trailing_bits
+static bool more_rbsp_data(const uint8_t* buffer, int bitOffset, int byteCnt)
+{
+    int byteOffset = bitOffset / 8;
+    // ending happens at last byte
+    if (byteOffset < byteCnt - 1)
+        return true;
+
+    // there must be a position for control bit
+    AASSERT(bitOffset != byteCnt);
+
+    uint8_t curByte = buffer[byteOffset];
+    int     contorlBit_offset = bitOffset & 7;
+
+    // control bit should be 1, remaining bits should be 0
+    int controlBit = (curByte >> (7 - contorlBit_offset)) & 0x01;
+    if (controlBit != 1)
+        return true;
+    int remainingBits = curByte & (1 << (7 - contorlBit_offset) - 1);
+
+    return remainingBits;
+}
+
+#define StartBits(buf, bitCounter, bitlength)                                                                          \
     const uint8_t* _buf = buf;                                                                                         \
     int&           _bitCounter = bitCounter;                                                                           \
-    int            _size = size
-#define StartBitsCursor(cursor) StartBits((cursor).buf, (cursor).bit_pos, (cursor).size)
+    int            _bitlength = bitlength
+#define StartBitsCursor(cursor) StartBits((cursor).buf, (cursor).bit_pos, (cursor).bit_length)
 #define GetBits(n) get_bits(_buf, _bitCounter, n)
 #define SkipBits(n) skip_bits(_buf, _bitCounter, n)
-#define MoreBits() (_size * 8 - _bitCounter)
+#define MORE_RBSP_DATA() more_rbsp_data(_buf, _bitCounter, _bitlength / 8)
 #define read_ue() read_ue_golomb(_buf, _bitCounter)
 #define read_se() read_se_golomb(_buf, _bitCounter)

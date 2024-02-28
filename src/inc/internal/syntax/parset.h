@@ -145,6 +145,8 @@ struct seq_parameter_set_rbsp_t
     unsigned             separate_colour_plane_flag;   // u(1)
     int                  max_dec_frame_buffering;
     int                  lossless_qpprime_flag;
+    // this may be renamed from lossless_qpprime_flag
+#define qpprime_y_zero_transform_bypass_flag lossless_qpprime_flag
 };
 
 #define MAXnum_slice_groups_minus1 8

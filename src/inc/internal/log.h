@@ -22,7 +22,7 @@ void Log(LogLevel ll, const char* fmt, ...);
 #endif
 #define LOGF(ll, fmt, ...) Log(ll, fmt " at %s", __VA_ARGS__, __func__)
 #define LOGP(ll, fmt, ...) Log(ll, fmt " at %s:%d", __VA_ARGS__, __FILE__, __LINE__)
-#define LOGPF(ll, fmt, ...) Log(ll, fmt " at %f %s:%d", __VA_ARGS__, __func__, __FILE__, __LINE__)
+#define LOGPF(ll, fmt, ...) Log(ll, fmt " at %s %s:%d", __VA_ARGS__, __func__, __FILE__, __LINE__)
 
 #define __CHOOSE_20th(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, ...)  \
     _20

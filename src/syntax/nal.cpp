@@ -1,5 +1,6 @@
 #include <syntax/nal.h>
 #include <log.h>
+#include <assert.h>
 
 nalu_t* ParseNAL(RBSPCursor& cursor)
 {
@@ -11,7 +12,7 @@ nalu_t* ParseNAL(RBSPCursor& cursor)
 
     // start code part is not in shrinked RBSP buffer
     nalu->startcodeprefix_len = cursor.refNal->start_code_length - 1;
-    nalu->len = cursor.size;
+    nalu->len = cursor.bit_length / 8;
 
     nalu->forbidden_bit = GetBits(1);
     nalu->nal_ref_idc = (NalRefIdc)GetBits(2);
@@ -95,7 +96,7 @@ int EBSP2RBSP_Inplace(uint8_t* buffer, int bp_start, int bp_end)
             count = 0;
         ++j;
     }
-    return 0;
+    return j;
 }
 
 int RBSP2SODB_Inplace(uint8_t* buffer, int bp_start, int bp_end)

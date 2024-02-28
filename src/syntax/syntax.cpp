@@ -11,6 +11,10 @@
 
 int Parser::SyntaxParse(const BufferView* nalBufView)
 {
+    // flushing
+    if (!nalBufView)
+        return 0;
+
     std::shared_ptr<RefNalu> refNal = makeRefNal(*nalBufView);
     RBSPCursor               cursor(refNal);
 
@@ -19,6 +23,8 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
     if (!(nalu = ParseNAL(cursor)))
         FailedParse("nalu", -1);
 
+    // j264 counting bits from RBSP, instead of nal header
+    cursor.BaseShiftBytes(cursor.bit_pos / 8);
     nalu->startcodeprefix_len = refNal->start_code_length;
 
     switch (nalu->nal_unit_type)
@@ -43,6 +49,8 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
     default:
         break;
     }
+    // check if whole SODB is consumed
+    AASSERT(cursor.bit_length - cursor.bit_pos < 8);
     return 0;
 }
 
@@ -52,9 +60,9 @@ GetBitContext RBSPCursor::GetGBC()
     if (buf)
     {
         ret.buffer = buf;
-        ret.buffer_end = buf + size;
+        ret.buffer_end = buf + bit_length / 8;
         ret.index = bit_pos;
-        ret.size_in_bits = size * 8;
+        ret.size_in_bits = bit_length;
     }
     return ret;
 }

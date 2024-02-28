@@ -125,7 +125,7 @@ std::unique_ptr<seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
             sps->separate_colour_plane_flag = GetBits(1);
         sps->bit_depth_luma_minus8 = read_ue();
         sps->bit_depth_chroma_minus8 = read_ue();
-        sps->lossless_qpprime_flag = GetBits(1);
+        sps->qpprime_y_zero_transform_bypass_flag = GetBits(1);
         sps->seq_scaling_matrix_present_flag = GetBits(1);
         if (sps->seq_scaling_matrix_present_flag)
         {
@@ -142,6 +142,15 @@ std::unique_ptr<seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
             }
         }
     }
+    else
+    { // $spec[7.4.2] default values
+        sps->chroma_format_idc = 1;
+        sps->bit_depth_luma_minus8 = 0;
+        sps->bit_depth_chroma_minus8 = 0;
+        sps->qpprime_y_zero_transform_bypass_flag = 0;
+        sps->separate_colour_plane_flag = 0;
+    }
+
     sps->log2_max_frame_num_minus4 = read_ue();
     sps->pic_order_cnt_type = read_ue();
     if (sps->pic_order_cnt_type == 0)
@@ -172,7 +181,7 @@ std::unique_ptr<seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
         sps->frame_crop_bottom_offset = read_ue();
     }
     if (sps->vui_parameters_present_flag = GetBits(1))
-        InterpretVUI(sps->vui_seq_parameters, cursor);
+        InterpretVUI(sps->vui_seq_parameters, __cursor);
 
     cursor = __cursor;
     return sps;
@@ -231,7 +240,7 @@ std::unique_ptr<pic_parameter_set_rbsp_t> ParsePPS(RBSPCursor& cursor, const str
     pps->constrained_intra_pred_flag = GetBits(1);
     pps->redundant_pic_cnt_present_flag = GetBits(1);
 
-    if (MoreBits())
+    if (MORE_RBSP_DATA())
     {
         pps->transform_8x8_mode_flag = GetBits(1);
         pps->pic_scaling_matrix_present_flag = GetBits(1);

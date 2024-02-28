@@ -92,7 +92,7 @@ struct nalu_t
 };
 
 /// @brief range: [begin,end)
-/// @return 0:OK
+/// @return size of RBSP length
 int EBSP2RBSP_Inplace(uint8_t* buffer, int begin, int end);
 
 /// @return 0:OK

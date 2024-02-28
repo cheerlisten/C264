@@ -12,7 +12,7 @@ struct BufferView
     uint32_t file_pos;
 };
 #define LOG(...) printf(__VA_ARGS__)
-#define LOG(...)
+// #define LOG(...)
 struct AnnexReader
 {
     int Init(const char* file, uint32_t io_buf_sz = 0);
@@ -273,8 +273,8 @@ int main()
     for (int i = 0; i < 100; ++i)
     {
         AnnexReader reader;
-        // reader.Init(CMAKE_SOURCE_DIR "/../C264-Resource/Res/USA20.h264");
-        reader.Init(R"(C:\Users\Administrator\Videos\In\USA.h264)");
+        reader.Init(CMAKE_SOURCE_DIR "/../C264-Resource/Res/USA.h264");
+        // reader.Init(R"(C:\Users\Administrator\Videos\In\USA.h264)");
         BufferView bufView;
 
         int nalu_count = 0;
