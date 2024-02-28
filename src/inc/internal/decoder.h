@@ -1,6 +1,7 @@
 #pragma once
 #include <c264/c264.h>
 #include <syntax/syntax.h>
+#include <sema/sema.h>
 
 class CDecoder : public IDecoder
 {
@@ -11,4 +12,6 @@ class CDecoder : public IDecoder
     virtual int GetFrame(const Picture** out_pic) override;
 
   private:
+    Sema   sema;
+    Parser parser;
 };

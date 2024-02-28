@@ -2,6 +2,7 @@
 
 int CDecoder::Initialize(const DecoderSetting* setting)
 {
+    parser.sema = &sema;
     return 0;
 }
 
@@ -12,7 +13,8 @@ int CDecoder::UnInitialize()
 
 int CDecoder::SendPacket(const BufferView* nalBufView)
 {
-    return -1;
+    AASSERT(parser.SyntaxParse(nalBufView) == 0);
+    return 0;
 }
 
 int CDecoder::GetFrame(const Picture** out_pic)
