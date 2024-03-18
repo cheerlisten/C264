@@ -5,10 +5,15 @@
 nalu_t* ParseNAL(RBSPCursor& cursor)
 {
     nalu_t* nalu = new nalu_t;
-    memset(nalu, 0, sizeof(nalu));
+    memset(nalu, 0, sizeof(*nalu));
 
     RBSPCursor __cursor = cursor;
     StartBitsCursor(__cursor);
+
+    /* default values */
+    {
+        nalu->svc_extension_flag = -1;
+    }
 
     // start code part is not in shrinked RBSP buffer
     nalu->startcodeprefix_len = cursor.refNal->start_code_length - 1;

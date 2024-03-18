@@ -27,6 +27,15 @@ enum class NALT
     VDRD = 24,               // View and Dependency Representation Delimiter NAL Unit
 };
 
+enum Dp_Mode
+{
+    DP_NONE,
+    DP_A,
+    DP_B,
+    DP_C,
+    DP_MODE_CNT
+};
+
 //! values for nal_ref_idc
 typedef enum
 {
@@ -83,7 +92,7 @@ struct nalu_t
     int       forbidden_bit;         // should be always FALSE
     NalRefIdc nal_ref_idc;           // NALU_PRIORITY_xxxx
     NALT      nal_unit_type;         // NALU_TYPE_xxxx
-    int       svc_extension_flag;    // should be always 0, for MVC
+    int       svc_extension_flag;    // 0:MVC, 1:SVC, -1:nothing
     int       avc_3d_extension_flag; // should be always 0, for MVC
 
     nalu_svc_t   opt_svc_extension;
