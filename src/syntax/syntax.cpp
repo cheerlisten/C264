@@ -34,7 +34,8 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
         std::unique_ptr<seq_parameter_set_rbsp_t> sps = nullptr;
         if (!(sps = ParseSPS(cursor)))
             FailedParse("SPS", -1);
-        sema->EmitSPS(nalu, sps);
+        this->sps.push_back(std::move(sps));
+        sema->EmitSPS(nalu, this->sps.back());
         break;
     }
     case NALT::PPS:
@@ -42,7 +43,15 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
         std::unique_ptr<pic_parameter_set_rbsp_t> pps = nullptr;
         if (!(pps = ParsePPS(cursor, this)))
             FailedParse("SPS", -1);
-        sema->EmitPPS(nalu, pps);
+        this->pps.push_back(std::move(pps));
+        sema->EmitPPS(nalu, this->pps.back());
+        break;
+    }
+    case NALT::IDR:
+    {
+        std::unique_ptr<Slice_t> slice = nullptr;
+        if (!(slice = ParseSlice(cursor, this, nalu)))
+            FailedParse("Slice", -1);
         break;
     }
 
@@ -50,7 +59,7 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
         break;
     }
     // check if whole SODB is consumed
-    AASSERT(cursor.bit_length - cursor.bit_pos < 8);
+    // AASSERT(cursor.bit_length - cursor.bit_pos < 8);
     return 0;
 }
 

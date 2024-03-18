@@ -24,12 +24,13 @@ void Log(LogLevel ll, const char* fmt, ...);
 #define LOGP(ll, fmt, ...) Log(ll, fmt " at %s:%d", __VA_ARGS__, __FILE__, __LINE__)
 #define LOGPF(ll, fmt, ...) Log(ll, fmt " at %s %s:%d", __VA_ARGS__, __func__, __FILE__, __LINE__)
 
+#define __EXPAND(x) x
 #define __CHOOSE_20th(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, ...)  \
     _20
 // clang-format off
-#define __MAP(_1, _2, _3, more, ...) __CHOOSE_20th( \
+#define __MAP(_1, _2, _3, more, ...) __EXPAND( __CHOOSE_20th( \
 __VA_ARGS__, more, more, more, more, more, more, more, more, more, \
-       more, more, more, more, more, more, more,   _3,   _2,   _1)
+       more, more, more, more, more, more, more,   _3,   _2,   _1) )
 // clang-format on
 #define __ASSERT_detail(condi, msg, act, ...)                                                                          \
     do                                                                                                                 \
@@ -44,7 +45,7 @@ __VA_ARGS__, more, more, more, more, more, more, more, more, more, \
 #define __ASSERT_1(condi) __ASSERT_detail(condi, "", exit(-1))
 #define __ASSERT_2(condi, msg) __ASSERT_detail(condi, msg, exit(-1))
 #define __ASSERT_3(condi, msg, act) __ASSERT_detail(condi, msg, act)
-#define AASSERT(...) __MAP(__ASSERT_1, __ASSERT_2, __ASSERT_3, __ASSERT_detail, __VA_ARGS__)(__VA_ARGS__)
+#define AASSERT(...) __EXPAND(__MAP(__ASSERT_1, __ASSERT_2, __ASSERT_3, __ASSERT_detail, __VA_ARGS__)(__VA_ARGS__))
 
 // clang-format off
 #define __Choose30th(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10,\

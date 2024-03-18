@@ -93,8 +93,6 @@ struct vui_seq_parameters_t
 
 struct seq_parameter_set_rbsp_t
 {
-    Bool Valid; // indicates the parameter set is valid
-
     uint32_t profile_idc;           // u(8)
     Bool     constrained_set0_flag; // u(1)
     Bool     constrained_set1_flag; // u(1)
