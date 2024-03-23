@@ -10,8 +10,7 @@ TEST(Source, NAL_Parser)
 {
     ISource* source;
     SourceSetting sourceSetting;
-    // sourceSetting.url = CMAKE_SOURCE_DIR "/../C264-Resource/Res/USA20.h264";
-    sourceSetting.url = CMAKE_SOURCE_DIR "/../C264-Resource/Res/USA.h264";
+    sourceSetting.url = CMAKE_SOURCE_DIR R"(/../C264-Resource/Res/USA20.h264)";
     sourceSetting.type = E_SOURCE_ANNEXB;
 
     CALL(CreateNALSource(&source));
