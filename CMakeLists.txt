@@ -22,6 +22,7 @@ target_sources(c264 PRIVATE
     ${C264_INTERNAL_HEADERS}
     ${C264_INTERFACE_HEADERS})
 target_compile_definitions(c264 PRIVATE EXPORT_C264)
+target_compile_options(c264 PRIVATE "/utf-8")
 target_include_directories(c264 PUBLIC src/inc PRIVATE src/inc/internal)
 
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/inc/c264 PREFIX Public FILES ${C264_INTERFACE_HEADERS})
