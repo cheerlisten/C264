@@ -1,5 +1,5 @@
-#include <syntax/cabac.h>
 #include <string.h>
+#include <syntax/syntax.h>
 
 static ContextVariable g_kAllContextVariables[CABAC_INIT_IDC_CNT][QP_CNT + 1][CABAC_CONTEXT_CNT];
 
@@ -7,11 +7,13 @@ static void InitAllContextVariables()
 {
     for (int32_t iModel = 0; iModel < 4; iModel++)
     {
+        const int8_t(*cabac_context_init)[CABAC_CONTEXT_CNT][2] =
+            iModel == 0 ? &cabac_context_init_I : &cabac_context_init_PB[iModel];
         for (int32_t iQp = 0; iQp <= QP_CNT; iQp++)
             for (int32_t iIdx = 0; iIdx < CABAC_CONTEXT_CNT; iIdx++)
             {
-                int32_t m = g_kiCabacGlobalContextIdx[iIdx][iModel][0];
-                int32_t n = g_kiCabacGlobalContextIdx[iIdx][iModel][1];
+                int32_t m = (*cabac_context_init)[iIdx][0];
+                int32_t n = (*cabac_context_init)[iIdx][1];
                 int32_t iPreCtxState = WELS_CLIP3((((m * iQp) >> 4) + n), 1, 126);
                 uint8_t valMPS = 0;
                 uint8_t pStateIdx = 0;
@@ -37,7 +39,7 @@ void InitContextVariables(int cabac_init_idc, int slice_qp, ContextVariable outC
         InitAllContextVariables();
         return 0;
     }();
-    memcpy(outCtxVars, g_kAllContextVariables[cabac_init_idc][slice_qp], sizeof(outCtxVars));
+    memcpy(outCtxVars, g_kAllContextVariables[cabac_init_idc][slice_qp], sizeof(ContextVariable) * CABAC_CONTEXT_CNT);
 }
 
 uint32_t BACDecoder::ReadBytes(int32_t nLessThan5)
