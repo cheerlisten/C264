@@ -190,5 +190,9 @@ struct pic_parameter_set_rbsp_t
     int cr_qp_index_offset; // se(v)
 };
 
-std::unique_ptr<seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor);
+struct Seq_parameter_set_rbsp_t : public seq_parameter_set_rbsp_t
+{
+};
+
+std::unique_ptr<Seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor);
 std::unique_ptr<pic_parameter_set_rbsp_t> ParsePPS(RBSPCursor& cursor, const struct Parser* parser);

@@ -1,6 +1,8 @@
 #pragma once
 #include <c264/c264.h>
 #include <syntax/common.h>
+#include <syntax/cabac.h>
+#include <syntax/macroblock.h>
 
 #define MAX_REF_PIC_COUNT 16 // MAX Short + Long reference pictures
 #define MAX_MMCO_COUNT 66
@@ -98,20 +100,64 @@ struct slice_t
     int slice_group_change_cycle; // u(v)
 };
 
-struct Slice_t
+struct Slice_t : public slice_t
 {
-    slice_t slice;
-
+    ~Slice_t();
     const struct nalu_t*                   nalu;
     const struct pic_parameter_set_rbsp_t* pps;
-    const struct seq_parameter_set_rbsp_t* sps;
+    const struct Seq_parameter_set_rbsp_t* sps;
 
-    Dp_Mode dp_mode;
-    int     QpBdOffsetY;
-    int     SliceQP_Y;
-    int     QS_Y;
-    int     FilterOffsetA;
-    int     FilterOffsetB;
+    struct Deduced
+    {
+        Dp_Mode dp_mode;
+        bool    MbaffFrameFlag;
+        int     QpBdOffsetY;
+        int     SliceQP_Y;
+        int     QS_Y;
+        int     FilterOffsetA;
+        int     FilterOffsetB;
+        int     PicWidthInMbs; // note fielded frame got two Pic
+        int     PicHeightInMapUnits;
+        int     FrameHeightInMbs;
+        int     FrameSizeInMbs;
+
+        std::vector<BlockPos> PicPos; // see jm: init_global_buffers cps->PicPos
+    } dd;
+
+    RBSPCursor rbspCursor;
+    struct BACContext
+    {
+        BACDecoder      decoder;
+        ContextVariable bac_contexts[CABAC_CONTEXT_CNT];
+    } cabac;
+
+    std::vector<Macroblock_t> mbs_buf;
+    Macroblock_t*             mbs;
+    int                       mb_line_stride;
+
+    int curMBIdx;
+
+    /* 
+    *  DBC
+    *  AX
+    */
+    int mbAddrA;
+    int mbAddrB;
+    int mbAddrC;
+    int mbAddrD;
+    int mbTypeA;
+    int mbTypeD;
+    int mbTypeC;
+    int mbTypeB;
+#define mbTypeLeft mbTypeA
+#define mbTypeTop mbTypeB
+#define mbTypeTopRight mbTypeC
+#define mbTypeTopLeft mbTypeD
+#define mbAddrLeft mbAddrA
+#define mbAddrTop mbAddrB
+#define mbAddrTopRight mbAddrC
+#define mbAddrTopLeft mbAddrD
+
+    int (*fnDecodeBlock)(Macroblock_t* curMB);
 };
-
-std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* parser, const nalu_t* nalu);
+std::unique_ptr<Slice_t> ParseSliceHeader(RBSPCursor& cursor, const struct Parser* parser, const nalu_t* nalu);

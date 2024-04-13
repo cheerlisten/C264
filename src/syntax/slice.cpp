@@ -3,11 +3,10 @@
 #include <defines.h>
 #include <log.h>
 
-static void ref_pic_list_reordering(Slice_t* slice_ex, RBSPCursor& cursor)
+static void ref_pic_list_reordering(Slice_t* slice, RBSPCursor& cursor)
 {
     StartBitsCursor(cursor);
-    slice_t*                        slice = &slice_ex->slice;
-    const seq_parameter_set_rbsp_t* sps = slice_ex->sps;
+    const seq_parameter_set_rbsp_t* sps = slice->sps;
     int                             i, val;
 
     //   alloc_ref_pic_list_reordering_buffer(slice);
@@ -40,13 +39,12 @@ static void ref_pic_list_reordering(Slice_t* slice_ex, RBSPCursor& cursor)
     // }
 }
 
-static void pred_weight_table(Slice_t* slice_ex, RBSPCursor& cursor)
+static void pred_weight_table(Slice_t* slice, RBSPCursor& cursor)
 {
     StartBitsCursor(cursor);
 
-    slice_t*                        slice = &slice_ex->slice;
-    const seq_parameter_set_rbsp_t* sps = slice_ex->sps;
-    const pic_parameter_set_rbsp_t* pps = slice_ex->pps;
+    const seq_parameter_set_rbsp_t* sps = slice->sps;
+    const pic_parameter_set_rbsp_t* pps = slice->pps;
 
     slice->luma_log2_weight_denom = read_ue();
 
@@ -97,14 +95,12 @@ static void pred_weight_table(Slice_t* slice_ex, RBSPCursor& cursor)
     }
 }
 
-void dec_ref_pic_marking(Slice_t* slice_ex, RBSPCursor& cursor)
+void dec_ref_pic_marking(Slice_t* slice, RBSPCursor& cursor)
 {
     StartBitsCursor(cursor);
+    const nalu_t* nalu = slice->nalu;
 
-    slice_t*      slice = &slice_ex->slice;
-    const nalu_t* nalu = slice_ex->nalu;
-
-    if (slice_ex->nalu->nal_unit_type == NALT::IDR)
+    if (slice->nalu->nal_unit_type == NALT::IDR)
 
 #if (MVC_EXTENSION_ENABLE)
         if (nalu->nal_unit_type == NALT::IDR ||
@@ -142,14 +138,14 @@ void dec_ref_pic_marking(Slice_t* slice_ex, RBSPCursor& cursor)
         }
 }
 
-std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* parser, const nalu_t* nalu)
+std::unique_ptr<Slice_t> ParseSliceHeader(RBSPCursor& cursor, const struct Parser* parser, const nalu_t* nalu)
 {
-    std::unique_ptr<Slice_t> slice_ex = std::make_unique<Slice_t>();
-    slice_t*                 slice = &slice_ex->slice;
+    std::unique_ptr<Slice_t> slice = std::make_unique<Slice_t>();
+    auto                     deduce = &slice->dd;
 
     // nal info
-    slice_ex->dp_mode = nalu->nal_unit_type == NALT::IDR ? Dp_Mode::DP_NONE : Dp_Mode(int(nalu->nal_unit_type));
-    slice_ex->nalu = nalu;
+    deduce->dp_mode = nalu->nal_unit_type == NALT::IDR ? Dp_Mode::DP_NONE : Dp_Mode(int(nalu->nal_unit_type));
+    slice->nalu = nalu;
 
     RBSPCursor __cursor = cursor;
     StartBitsCursor(__cursor);
@@ -165,12 +161,12 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
     if (parser->pps.size() < slice->pic_parameter_set_id)
         return nullptr;
     const pic_parameter_set_rbsp_t* pps = parser->pps[slice->pic_parameter_set_id].get();
-    const seq_parameter_set_rbsp_t* sps = parser->sps[pps->seq_parameter_set_id].get();
-    slice_ex->pps = pps;
-    slice_ex->sps = sps;
+    slice->sps = parser->sps[pps->seq_parameter_set_id].get();
+    const seq_parameter_set_rbsp_t* sps = slice->sps;
+    slice->pps = pps;
 
     // PS infos
-    slice_ex->QpBdOffsetY = 6 * sps->bit_depth_luma_minus8; // $spec E[7-4]
+    deduce->QpBdOffsetY = 6 * sps->bit_depth_luma_minus8; // $spec E[7-4]
 
     if (sps->separate_colour_plane_flag)
         slice->colour_plane_id = GetBits(2);
@@ -186,7 +182,7 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
             slice->bottom_field_flag = GetBits(1);
     }
 
-    // $spec:[Equation:7-1]
+    // $spec[Equation:7-1]
     bool IdrPicFlag = nalu->nal_unit_type == NALT::IDR;
     if (IdrPicFlag)
         slice->idr_pic_id = read_ue();
@@ -259,21 +255,21 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
     if (nalu->nal_unit_type == NALT::SLC_EXT || nalu->nal_unit_type == NALT::DVC_EXT_OR_3DAVCVC)
         AASSERT(!"mvc not supported"); // ref_pic_list_mvc_modification(slice); // specified in AnnexH
     else
-        ref_pic_list_reordering(slice_ex.get(), __cursor); //ref_pic_list_reordering(slice);
+        ref_pic_list_reordering(slice.get(), __cursor); //ref_pic_list_reordering(slice);
 
-    // slice_ex->weighted_pred_flag = (unsigned short)((slice->slice_type == SLICE_P || slice->slice_type == SLICE_SP) ?
+    // slice->weighted_pred_flag = (unsigned short)((slice->slice_type == SLICE_P || slice->slice_type == SLICE_SP) ?
     //                                                  pps->weighted_pred_flag :
     //                                                  (slice->slice_type == SLICE_B && pps->weighted_bipred_idc == 1));
-    // slice_ex->weighted_bipred_idc = (unsigned short)(slice->slice_type == SLICE_B && pps->weighted_bipred_idc > 0);
+    // slice->weighted_bipred_idc = (unsigned short)(slice->slice_type == SLICE_B && pps->weighted_bipred_idc > 0);
 
     if ((pps->weighted_pred_flag && (slice->slice_type == SLICE_P || slice->slice_type == SLICE_SP)) ||
         (pps->weighted_bipred_idc == 1 && (slice->slice_type == SLICE_B)))
     {
-        pred_weight_table(slice_ex.get(), __cursor);
+        pred_weight_table(slice.get(), __cursor);
     }
 
     if (nalu->nal_ref_idc)
-        dec_ref_pic_marking(slice_ex.get(), __cursor);
+        dec_ref_pic_marking(slice.get(), __cursor);
 
     if (pps->entropy_coding_mode_flag && slice->slice_type != SLICE_I && slice->slice_type != SLICE_SI)
         slice->cabac_init_idc = read_ue();
@@ -281,10 +277,10 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
         slice->cabac_init_idc = 0;
 
     slice->slice_qp_delta = read_se();
-    slice_ex->SliceQP_Y = 26 + pps->pic_init_qp_minus26 + slice->slice_qp_delta; // $spec S[] slice_qp_delta
-    AASSERT((slice_ex->SliceQP_Y >= -slice_ex->SliceQP_Y) && (slice_ex->SliceQP_Y <= 51),
+    deduce->SliceQP_Y = 26 + pps->pic_init_qp_minus26 + slice->slice_qp_delta; // $spec S[] slice_qp_delta
+    AASSERT((deduce->SliceQP_Y >= -deduce->SliceQP_Y) && (deduce->SliceQP_Y <= 51),
             "slice_qp_delta=%d makes SliceQP_Y out of range",
-            slice_ex->SliceQP_Y);
+            deduce->SliceQP_Y);
 
     if (slice->slice_type == SLICE_SP || slice->slice_type == SLICE_SI)
     {
@@ -293,11 +289,11 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
             slice->sp_for_switch_flag = GetBits(1);
         }
         slice->slice_qs_delta = read_se();
-        slice_ex->QS_Y = 26 + pps->pic_init_qs_minus26 + slice->slice_qs_delta;
-        AASSERT(slice_ex->QS_Y >= 0 && slice_ex->QS_Y <= 51,
+        deduce->QS_Y = 26 + pps->pic_init_qs_minus26 + slice->slice_qs_delta;
+        AASSERT(deduce->QS_Y >= 0 && deduce->QS_Y <= 51,
                 "slice_qs_delta=%d makes QS_Y=%d out of range",
                 slice->slice_qs_delta,
-                slice_ex->QS_Y);
+                deduce->QS_Y);
     }
 
     if (pps->deblocking_filter_control_present_flag)
@@ -308,8 +304,8 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
         {
             slice->slice_alpha_c0_offset_div2 = read_se();
             slice->slice_beta_offset_div2 = read_se();
-            slice_ex->FilterOffsetA = slice->slice_alpha_c0_offset_div2 * 2;
-            slice_ex->FilterOffsetB = slice->slice_beta_offset_div2 * 2;
+            deduce->FilterOffsetA = slice->slice_alpha_c0_offset_div2 * 2;
+            deduce->FilterOffsetB = slice->slice_beta_offset_div2 * 2;
         }
     }
 
@@ -322,5 +318,12 @@ std::unique_ptr<Slice_t> ParseSlice(RBSPCursor& cursor, const struct Parser* par
     }
 
     cursor = __cursor;
-    return slice_ex;
+    return slice;
+}
+
+Slice_t::~Slice_t()
+{
+    mbs_buf.clear();
+    mbs = nullptr;
+    mb_line_stride = 0;
 }

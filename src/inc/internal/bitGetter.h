@@ -129,9 +129,9 @@ static bool more_rbsp_data(const uint8_t* buffer, int bitOffset, int byteCnt)
 }
 
 #define StartBits(buf, bitCounter, bitlength)                                                                          \
-    const uint8_t* _buf = buf;                                                                                         \
-    int&           _bitCounter = bitCounter;                                                                           \
-    int            _bitlength = bitlength
+    uint8_t*& _buf = buf;                                                                                              \
+    int&      _bitCounter = bitCounter;                                                                                \
+    int&      _bitlength = bitlength
 #define StartBitsCursor(cursor) StartBits((cursor).buf, (cursor).bit_pos, (cursor).bit_length)
 #define GetBits(n) get_bits(_buf, _bitCounter, n)
 #define SkipBits(n) skip_bits(_buf, _bitCounter, n)

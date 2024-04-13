@@ -1,7 +1,8 @@
 #include <memory>
-#include <syntax/syntax.h>
-#include <sema/sema.h>
+#include <core/coredec.h>
 #include <log.h>
+#include <sema/sema.h>
+#include <syntax/syntax.h>
 #define FailedParse(elementDesc, retval)                                                                               \
     do                                                                                                                 \
     {                                                                                                                  \
@@ -18,6 +19,8 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
     std::shared_ptr<RefNalu> refNal = makeRefNal(*nalBufView);
     RBSPCursor               cursor(refNal);
 
+    std::unique_ptr<Slice_t> slice = nullptr;
+
     int     result = 0;
     nalu_t* nalu = nullptr;
     if (!(nalu = ParseNAL(cursor)))
@@ -31,7 +34,7 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
     {
     case NALT::SPS:
     {
-        std::unique_ptr<seq_parameter_set_rbsp_t> sps = nullptr;
+        std::unique_ptr<Seq_parameter_set_rbsp_t> sps = nullptr;
         if (!(sps = ParseSPS(cursor)))
             FailedParse("SPS", -1);
         this->sps.push_back(std::move(sps));
@@ -49,18 +52,22 @@ int Parser::SyntaxParse(const BufferView* nalBufView)
     }
     case NALT::IDR:
     {
-        std::unique_ptr<Slice_t> slice = nullptr;
-        if (!(slice = ParseSlice(cursor, this, nalu)))
-            FailedParse("Slice", -1);
+        if (!(slice = ParseSliceHeader(cursor, this, nalu)))
+            FailedParse("SliceHeader", -1);
         break;
     }
 
     default:
         break;
     }
+
+    if (!slice)
+        return 0;
+
+    result = DecodeSlice(slice.get(), cursor);
     // check if whole SODB is consumed
     // AASSERT(cursor.bit_length - cursor.bit_pos < 8);
-    return 0;
+    return result;
 }
 
 GetBitContext RBSPCursor::GetGBC()

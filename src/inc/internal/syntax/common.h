@@ -19,7 +19,7 @@ struct RefNalu : RefBuffer
 
 struct RBSPCursor
 {
-    RBSPCursor(std::shared_ptr<RefNalu> refNal_, int bitRangeStart = 0, int bitRangeLen = -1) :
+    RBSPCursor(std::shared_ptr<RefNalu> refNal_ = nullptr, int bitRangeStart = 0, int bitRangeLen = -1) :
         refNal(refNal_), buf(nullptr), bit_length(0), bit_pos(0)
     {
         if (refNal)

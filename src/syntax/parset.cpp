@@ -49,7 +49,7 @@ static void InterpretVUI(vui_seq_parameters_t& vui, RBSPCursor& cursor)
     if (vui.aspect_ratio_info_present_flag = GetBits(1))
     {
         vui.aspect_ratio_idc = GetBits(8);
-        /* $spec:[Table E-1] Extended_SAR=255 */
+        /* $spec Table[E-1] Extended_SAR=255 */
         if (vui.aspect_ratio_idc == 255)
         {
             vui.sar_width = GetBits(16);
@@ -100,9 +100,9 @@ static void InterpretVUI(vui_seq_parameters_t& vui, RBSPCursor& cursor)
     }
 }
 
-std::unique_ptr<seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
+std::unique_ptr<Seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
 {
-    std::unique_ptr<seq_parameter_set_rbsp_t> sps = std::make_unique<seq_parameter_set_rbsp_t>();
+    std::unique_ptr<Seq_parameter_set_rbsp_t> sps = std::make_unique<Seq_parameter_set_rbsp_t>();
 
     RBSPCursor __cursor = cursor;
     StartBitsCursor(__cursor);

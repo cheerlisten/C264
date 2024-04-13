@@ -1,6 +1,6 @@
 #include <sema/sema.h>
 
-int Sema::EmitSPS(nalu_t* nalu, std::unique_ptr<seq_parameter_set_rbsp_t>& sps)
+int Sema::EmitSPS(nalu_t* nalu, std::unique_ptr<Seq_parameter_set_rbsp_t>& sps)
 {
     return 0;
 }
