@@ -27,6 +27,7 @@ inline static uint32_t Swap32(uint32_t u32)
 // prerequest: (gbc->index & 7) + n <= 32. so n <= 25 is safe
 static uint32_t get_bits(GetBitContext* gbc, int n)
 {
+    AASSERT((gbc->index & 7) + n <= 32);
     const uint32_t buffer32 = Swap32(*(const uint32_t*)(gbc->buffer + (gbc->index >> 3)));
     int            bitOffset = gbc->index & 0x7;
     uint32_t       ret = (buffer32) << bitOffset >> (32 - n);
@@ -36,6 +37,7 @@ static uint32_t get_bits(GetBitContext* gbc, int n)
 
 static uint32_t show_bits(GetBitContext* gbc, int n)
 {
+    AASSERT((gbc->index & 7) + n <= 32);
     const uint32_t buffer32 = Swap32(*(const uint32_t*)(gbc->buffer + (gbc->index >> 3)));
     int            bitOffset = gbc->index & 0x7;
     uint32_t       ret = (buffer32) << bitOffset >> (32 - n);
@@ -105,7 +107,7 @@ static uint32_t read_se_golomb(const byte* buffer, int& bitCounter)
         return -int32_t(ue >> 1);
 }
 
-/// @note $spec[7.4.1] rbsp_trailing_bits
+/// @note $spec Chp[7.4.1] rbsp_trailing_bits
 static bool more_rbsp_data(const uint8_t* buffer, int bitOffset, int byteCnt)
 {
     int byteOffset = bitOffset / 8;
@@ -129,7 +131,7 @@ static bool more_rbsp_data(const uint8_t* buffer, int bitOffset, int byteCnt)
 }
 
 #define StartBits(buf, bitCounter, bitlength)                                                                          \
-    uint8_t*& _buf = buf;                                                                                              \
+    uint8_t*& _buf = const_cast<uint8_t*&>(buf);                                                                       \
     int&      _bitCounter = bitCounter;                                                                                \
     int&      _bitlength = bitlength
 #define StartBitsCursor(cursor) StartBits((cursor).buf, (cursor).bit_pos, (cursor).bit_length)
