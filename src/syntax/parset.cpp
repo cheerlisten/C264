@@ -1,6 +1,15 @@
 #include <syntax/syntax.h>
 #include <log.h>
 
+// Table 6-1 –SubWidthC, and SubHeightC values derived from
+// chroma_format_idc and separate_colour_plane_flag
+const ChromaFormatInfo g_chromaFormatInfos[4]{
+    { ChormaFormatIDC::Monochronome, -1, -1 },
+    { ChormaFormatIDC::XYZ420, 2, 2 },
+    { ChormaFormatIDC::XYZ422, 2, 1 },
+    { ChormaFormatIDC::XYZ444, 1, 1 },
+};
+
 static void Scaling_List(int* scalingList, int sizeOfScalingList, Bool* useDefaultScalingMatrix, RBSPCursor& cursor)
 {
     StartBitsCursor(cursor);
@@ -104,6 +113,8 @@ std::unique_ptr<Seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
 {
     std::unique_ptr<Seq_parameter_set_rbsp_t> sps = std::make_unique<Seq_parameter_set_rbsp_t>();
 
+    auto* dd = &sps->dd;
+
     RBSPCursor __cursor = cursor;
     StartBitsCursor(__cursor);
 
@@ -150,6 +161,17 @@ std::unique_ptr<Seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor)
         sps->qpprime_y_zero_transform_bypass_flag = 0;
         sps->separate_colour_plane_flag = 0;
     }
+    AASSERT(sps->bit_depth_chroma_minus8 == sps->bit_depth_chroma_minus8, "not support diff vals yet");
+
+    // $spec E7-3 E7-4 E7-5 E7-6
+    dd->BitDepth_Y = 8 + sps->bit_depth_luma_minus8;
+    dd->QpBdOffset_Y = 6 * sps->bit_depth_luma_minus8;
+    dd->BitDepth_C = 8 + sps->bit_depth_chroma_minus8;
+    dd->QpBdOffset_C = 6 * sps->bit_depth_chroma_minus8;
+    // $spec E6-1 E6-2
+    auto& chromaInfo = g_chromaFormatInfos[sps->chroma_format_idc];
+    dd->MbHeightC = 16 / chromaInfo.SubHeightC;
+    dd->MbWidthC = 16 / chromaInfo.SubWidthC;
 
     sps->log2_max_frame_num_minus4 = read_ue();
     sps->pic_order_cnt_type = read_ue();

@@ -36,6 +36,19 @@ static const uint8_t g_kuiZigzagScan8x8[64] = { //8x8 block residual zig-zag sca
   58, 59, 52, 45, 38, 31, 39, 46,
   53, 60, 61, 54, 47, 55, 62, 63,
 };
+enum class ChormaFormatIDC{
+    Monochronome,
+    XYZ420,
+    XYZ422,
+    XYZ444,
+};
+struct ChromaFormatInfo
+{
+    ChormaFormatIDC chroma_format_idc;
+    int SubWidthC;
+    int SubHeightC;
+};
+extern const ChromaFormatInfo g_chromaFormatInfos[4];
 // clang-format on
 
 struct hrd_parameters_t
@@ -102,7 +115,7 @@ struct seq_parameter_set_rbsp_t
     Bool     constrained_set5_flag; // u(2)
     uint32_t level_idc;             // u(8)
     uint32_t seq_parameter_set_id;  // ue(v)
-    uint32_t chroma_format_idc;     // ue(v)
+    uint8_t  chroma_format_idc;     // ue(v)
 
     Bool seq_scaling_matrix_present_flag;   // u(1)
     int  seq_scaling_list_present_flag[12]; // u(1)
@@ -192,6 +205,15 @@ struct pic_parameter_set_rbsp_t
 
 struct Seq_parameter_set_rbsp_t : public seq_parameter_set_rbsp_t
 {
+    struct Deduced
+    {
+        int MbWidthC;
+        int MbHeightC;
+        int BitDepth_Y;
+        int QpBdOffset_Y;
+        int BitDepth_C;
+        int QpBdOffset_C;
+    } dd;
 };
 
 std::unique_ptr<Seq_parameter_set_rbsp_t> ParseSPS(RBSPCursor& cursor);

@@ -165,9 +165,6 @@ std::unique_ptr<Slice_t> ParseSliceHeader(RBSPCursor& cursor, const struct Parse
     const seq_parameter_set_rbsp_t* sps = slice->sps;
     slice->pps = pps;
 
-    // PS infos
-    deduce->QpBdOffsetY = 6 * sps->bit_depth_luma_minus8; // $spec E[7-4]
-
     if (sps->separate_colour_plane_flag)
         slice->colour_plane_id = GetBits(2);
     else

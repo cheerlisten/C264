@@ -111,7 +111,6 @@ struct Slice_t : public slice_t
     {
         Dp_Mode dp_mode;
         bool    MbaffFrameFlag;
-        int     QpBdOffsetY;
         int     SliceQP_Y;
         int     QS_Y;
         int     FilterOffsetA;
@@ -130,6 +129,10 @@ struct Slice_t : public slice_t
         BACDecoder      decoder;
         ContextVariable bac_contexts[CABAC_CONTEXT_CNT];
     } cabac;
+
+    struct VLCContext{
+        GetBitContext gbc;
+    } cavlc;
 
     std::vector<Macroblock_t> mbs_buf;
     Macroblock_t*             mbs;
