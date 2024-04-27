@@ -1,16 +1,16 @@
 #include <syntax/syntax.h>
 #include <defines.h>
 /* $spec[Table 7-11] Macroblock types for I slices */
-const IMbInfo ff_h264_i_MT_info[26] = {
-    { MT_INTRA4x4, -1, -1 },       { MT_INTRA16x16, 0, 0 },       { MT_INTRA16x16, 1, 0 },
-    { MT_INTRA16x16, 2, 0 },       { MT_INTRA16x16, 3, 0 },       { MT_INTRA16x16, 0, 16 },
-    { MT_INTRA16x16, 1, 16 },      { MT_INTRA16x16, 2, 16 },      { MT_INTRA16x16, 3, 16 },
-    { MT_INTRA16x16, 0, 32 },      { MT_INTRA16x16, 1, 32 },      { MT_INTRA16x16, 2, 32 },
-    { MT_INTRA16x16, 3, 32 },      { MT_INTRA16x16, 0, 15 + 0 },  { MT_INTRA16x16, 1, 15 + 0 },
-    { MT_INTRA16x16, 2, 15 + 0 },  { MT_INTRA16x16, 3, 15 + 0 },  { MT_INTRA16x16, 0, 15 + 16 },
-    { MT_INTRA16x16, 1, 15 + 16 }, { MT_INTRA16x16, 2, 15 + 16 }, { MT_INTRA16x16, 3, 15 + 16 },
-    { MT_INTRA16x16, 0, 15 + 32 }, { MT_INTRA16x16, 1, 15 + 32 }, { MT_INTRA16x16, 2, 15 + 32 },
-    { MT_INTRA16x16, 3, 15 + 32 }, { MT_INTRA_PCM, -1, -1 },
+const IMbInfo ff_h264_i_MB_TYPE_info[26] = {
+    { MB_TYPE_INTRA4x4, -1, -1 },       { MB_TYPE_INTRA16x16, 0, 0 },       { MB_TYPE_INTRA16x16, 1, 0 },
+    { MB_TYPE_INTRA16x16, 2, 0 },       { MB_TYPE_INTRA16x16, 3, 0 },       { MB_TYPE_INTRA16x16, 0, 16 },
+    { MB_TYPE_INTRA16x16, 1, 16 },      { MB_TYPE_INTRA16x16, 2, 16 },      { MB_TYPE_INTRA16x16, 3, 16 },
+    { MB_TYPE_INTRA16x16, 0, 32 },      { MB_TYPE_INTRA16x16, 1, 32 },      { MB_TYPE_INTRA16x16, 2, 32 },
+    { MB_TYPE_INTRA16x16, 3, 32 },      { MB_TYPE_INTRA16x16, 0, 15 + 0 },  { MB_TYPE_INTRA16x16, 1, 15 + 0 },
+    { MB_TYPE_INTRA16x16, 2, 15 + 0 },  { MB_TYPE_INTRA16x16, 3, 15 + 0 },  { MB_TYPE_INTRA16x16, 0, 15 + 16 },
+    { MB_TYPE_INTRA16x16, 1, 15 + 16 }, { MB_TYPE_INTRA16x16, 2, 15 + 16 }, { MB_TYPE_INTRA16x16, 3, 15 + 16 },
+    { MB_TYPE_INTRA16x16, 0, 15 + 32 }, { MB_TYPE_INTRA16x16, 1, 15 + 32 }, { MB_TYPE_INTRA16x16, 2, 15 + 32 },
+    { MB_TYPE_INTRA16x16, 3, 15 + 32 }, { MB_TYPE_INTRA_PCM, -1, -1 },
 };
 
 /* try template for static dispatch */
